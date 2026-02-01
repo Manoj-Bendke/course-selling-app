@@ -15,7 +15,7 @@ async function connectDB() {
 connectDB();
 const userSchema = new schema({
   firstname: String,
-  lastname: String,
+  lastname: String, 
   email: { type: String, unique: true },
   password: String,
 });
