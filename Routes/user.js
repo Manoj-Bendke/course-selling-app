@@ -1,11 +1,12 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
+import { middlewares } from "../middlewares/auth.js";
 const userrouter = Router();
 
 
-userrouter.get('/courses', (req, res) => {
+userrouter.get('/courses',middlewares, (req, res) => {
   
-  res.send('Admin course Page');
+  res.send('User course Page');
 }
 );
 userrouter.post('/signin', (req, res) => {
@@ -19,7 +20,7 @@ userrouter.post('/signup', async(req, res) => {
   {
     return res.status(403).json({error : "A Valid email is required"});
   }
-  if(!password || !lastName || lastName != z.string() || !firstName || firstName != z.string()){
+  if(!password || !lastName  || !firstName  ){
     return res.status(403).json({error : "Please fill all the fields properly"})
   }  
   const hashedpass = bcrypt.hash(password,10);
