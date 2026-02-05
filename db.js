@@ -14,23 +14,23 @@ async function connectDB() {
 
 connectDB();
 const userSchema = new schema({
-  firstname: String,
-  lastname: String, 
+  firstName: String,
+  lastName: String, 
   email: { type: String, unique: true },
   password: String,
 });
 
 const adminSchema = new schema({
-  firstname: String,
-  lastname: String,
+  firstName: String,
+  lastName: String,
   email: { type: String, unique: true },
   password: String,
 });
 const courseSchema = new schema({
-  title: String,
-  description: String,
-  price: Number,
-  imageLink: String,
+  title: { type: String, unique: true },
+  description: {type: String, required: true},
+  price: {  type: Number, required: true },
+  imageLink: {  type: String, required: true  },
   creatorId: String,  
 });
 
