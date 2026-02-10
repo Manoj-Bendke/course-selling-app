@@ -9,13 +9,13 @@ const adminrouter = Router();
 
 adminrouter.get("/courses", middlewares(adminJWT), async (req, res) => {
   const id = req.userId;
-  const courses = await Course.find({ creatorId : id });
+  const courses = await Course.find({ creatorId: id });
   if (!courses) {
     res
       .status(400)
       .json({ error: "Something went wrong while fetching courses" });
   }
-  res.send(courses);  
+  res.send(courses);
 });
 adminrouter.post("/signin", async (req, res) => {
   const { email, password } = req.body;
@@ -24,25 +24,14 @@ adminrouter.post("/signin", async (req, res) => {
   if (!admin) {
     return res.status(403).json("Invalid email");
   }
-  bcrypt.compare(password, admin.password, (err, result) => {
-    if (err) {
-      return res.status(400).json(err);
-    }
-    if (result) {
-      const token = jwt.sign(
-        {
-          id: admin._id,
-        },
-        adminJWT,
-      );
-
-      return res.status(200).json({ token: token });
-    } else {
-      return res
-        .status(403)
-        .json({ error: "Passwords do not match. Authentication failed." });
-    }
-  });
+  const match = await bcrypt.compare(password, admin.password);
+  if (match) {
+    const token = jwt.sign({ id: admin._id }, adminJWT);
+    return res.status(200).json({ token: token });
+  }
+  return res
+    .status(403)
+    .json({ error: "Passwords do not match. Authentication failed." });
 });
 
 adminrouter.post("/signup", validator, async (req, res) => {
@@ -51,25 +40,31 @@ adminrouter.post("/signup", validator, async (req, res) => {
   const hashedPass = await bcrypt.hash(password, 10);
   try {
     await Admin.create({ firstName, lastName, email, password: hashedPass });
-    res.status(200).json({ message: "you have signed up" });
+    return res.status(200).json({ message: "you have signed up" });
   } catch (e) {
-        res.status(400).json(e.errorResponse?.errmsg || e.message || "Failed to sign up admin");
-    
+    return res
+      .status(400)
+      .json(e.errorResponse?.errmsg || e.message || "Failed to sign up admin");
   }
 });
 
 adminrouter.post("/createcourse", middlewares(adminJWT), async (req, res) => {
   const { title, description, price, imageLink } = req.body;
   const creatorId = req.userId;
-  if(!title  || !description || !price || !imageLink){
-    return res.status(400).json({Error :"All the fields are required"})
+  if (!title || !description || !price || !imageLink) {
+    return res.status(400).json({ Error: "All the fields are required" });
   }
   try {
     await Course.create({ title, description, price, imageLink, creatorId });
-    res.status(201).json("Course Created successfully!")
+    res.status(201).json("Course Created successfully!");
   } catch (error) {
-    res.status(400).json(error.errorResponse?.errmsg || error.message || "Failed to create course");
-     
+    return res
+      .status(400)
+      .json(
+        error.errorResponse?.errmsg ||
+          error.message ||
+          "Failed to create course",
+      );
   }
 });
 export { adminrouter };

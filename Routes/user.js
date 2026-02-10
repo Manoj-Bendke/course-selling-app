@@ -17,15 +17,20 @@ userrouter.get("/courses", middlewares(userJWT), async (req, res) => {
 });
 userrouter.post("/signin", async (req, res) => {
   const { email, password } = req.body;
+  try {
   const user = await User.findOne({ email });
   if (user) {
     const match = await bcrypt.compare(password, user.password);
     if (match) {
       const token = jwt.sign({ id: user._id }, userJWT);
       return res.status(200).json({ token: token });
-    }    return res.status(403).json({ error: "Incorrect Password" });
+    }    
+    return res.status(403).json({ error: "Incorrect Password" });
   }
   res.status(404).json({ error: "User Not Found, Please Sign up" });
+  } catch (e) {   
+    res.status(400).json(e.errorResponse?.errmsg || e.message || "Failed to sign in");
+  }
 });
 
 userrouter.post("/signup", validator, async (req, res) => {
