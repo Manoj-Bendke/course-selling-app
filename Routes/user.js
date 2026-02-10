@@ -1,6 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
-import { Course, User,Purchase } from "../db.js";
+import { Course, User, Purchase } from "../db.js";
 import { middlewares } from "../middlewares/auth.js";
 import { userJWT } from "../config.js";
 import { validator } from "../middlewares/validators.js";
@@ -12,21 +12,31 @@ userrouter.get("/courses", middlewares(userJWT), async (req, res) => {
     const courses = await Course.find({});
     return res.status(200).send(courses);
   } catch (e) {
-    res.status(400).json(e.errorResponse.errmsg);
+    res
+      .status(400)
+      .json(e.errorResponse?.errmsg || e.message || "Failed to fetch courses");
   }
 });
 userrouter.post("/signin", async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (user) {
-    const match = bcrypt.compare(password, user.password);
-    if (match) {
-      const token = jwt.sign({ id: user._id }, userJWT);
-      return res.status(200).json({ token: token });
+  try {
+    const user = await User.findOne({ email });
+    if (user) {
+      const match = await bcrypt.compare(password, user.password);
+      if (match) {
+        const token = jwt.sign({ id: user._id }, userJWT);
+        return res.status(200).json({ token: token });
+      }
+      return res.status(401).json({ error: "Invalid email or password" });
     }
-    return res.status(403).json("Incorrect Password");
+    return res.status(401).json({ error: "Invalid email or password" });
+  } catch (e) {
+    return res
+      .status(400)
+      .json({
+        error: e.errorResponse?.errmsg || e.message || "Failed to sign in",
+      });
   }
-  res.status(404).json("User Not Found, Please Sign up");
 });
 
 userrouter.post("/signup", validator, async (req, res) => {
@@ -40,7 +50,6 @@ userrouter.post("/signup", validator, async (req, res) => {
       .json({ error: "Please fill all the fields properly" });
   }
   const hashedpass = await bcrypt.hash(password, 10);
-  console.log(hashedpass);
   try {
     await User.create({
       email,
@@ -48,20 +57,34 @@ userrouter.post("/signup", validator, async (req, res) => {
       firstName,
       password: hashedpass,
     });
-    res.status(200).send("Admin Sign Up");
+    res.status(200).send("User has been signed up successfully");
   } catch (e) {
-    res.status(400).send(e);
+    res
+      .status(400)
+      .json(e.errorResponse?.errmsg || e.message || "Failed to sign up");
   }
 });
 
 userrouter.get("/purchases", middlewares(userJWT), async (req, res) => {
   const userId = req.userId;
-  const purchases = await Purchase.find({ userId: userId });
-  if (!purchases || purchases.length === 0) {
-    return res.status(400).json({ error: "You have not purchased any course yet" });
+  try {
+    const purchases = await Purchase.find({ userId: userId });
+    if (!purchases || purchases.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "You have not purchased any course yet" });
+    }
+    const courseData = await Course.find({
+      _id: { $in: purchases.map((x) => x.courseId) },
+    });
+    res.status(200).json(courseData);
+  } catch (e) {
+    res
+      .status(400)
+      .json(
+        e.errorResponse?.errmsg || e.message || "Failed to fetch purchases",
+      );
   }
-  const courseData = await Course.find({ _id: { $in: purchases.map((x) => x.courseId) } });
-  res.status(200).json(courseData);
-})
+});
 
 export { userrouter };
