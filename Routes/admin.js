@@ -53,7 +53,8 @@ adminrouter.post("/signup", validator, async (req, res) => {
     await Admin.create({ firstName, lastName, email, password: hashedPass });
     res.status(200).json({ message: "you have signed up" });
   } catch (e) {
-    res.status(400).json(e);
+        res.status(400).json(e.errorResponse?.errmsg || e.message || "Failed to sign up admin");
+    
   }
 });
 
@@ -67,7 +68,8 @@ adminrouter.post("/createcourse", middlewares(adminJWT), async (req, res) => {
     await Course.create({ title, description, price, imageLink, creatorId });
     res.status(201).json("Course Created successfully!")
   } catch (error) {
-     res.status(400).json(error.errorResponse.errmsg)
+    res.status(400).json(error.errorResponse?.errmsg || error.message || "Failed to create course");
+     
   }
 });
 export { adminrouter };

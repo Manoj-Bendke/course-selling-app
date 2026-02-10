@@ -27,20 +27,25 @@ courserouter.post('/enroll', middlewares(userJWT), async(req, res) => {
   })
   res.status(200).json({message : "Course enrolled successfully"})
   }catch(e){
-    res.status(400).json(e.errorResponse.errmsg)
+    res.status(400).json(e.errorResponse?.errmsg || e.message || "Failed to enroll course");
   }
 });
 
-courserouter.get('/preview', async(req, res) => {
-  const {courseId} = req.body;
+courserouter.get('/preview/:courseId', async(req, res) => {
+  const {courseId} = req.params;
   if(!courseId){
     return res.status(400).json({error: "Missing inputs"});
   }
+  try{
   const courseData = await Course.findOne({_id : courseId})
-  if(!courseData){
+   if(!courseData){
     return res.status(400).json({error : "Course doesn't exists"})
   }
   res.status(200).json(courseData);
+  }catch(e){
+    res.status(400).json(e.errorResponse.errmsg || e.message || "Failed to fetch course preview");
+  }
+ 
 });
 
 export { courserouter };
