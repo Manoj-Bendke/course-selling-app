@@ -7,8 +7,7 @@ const courserouter =  Router();
 courserouter.post('/enroll', middlewares(userJWT), async(req, res) => {
   const userId = req.userId;
   const {courseId} = req.body;
-  console.log(req.body);
-  if(!userId || !courseId){
+  if(!userId || !courseId){  if(!userId || !courseId){
     return res.status(400).json({error: "Missing inputs"});
   } 
   const enrolled = await Purchase.findOne({ 
@@ -43,8 +42,7 @@ courserouter.get('/preview/:courseId', async(req, res) => {
   }
   res.status(200).json(courseData);
   }catch(e){
-    res.status(400).json(e.errorResponse?.errmsg || e.message || "Failed to fetch course preview");
-  }
+    res.status(400).json({error: e.errorResponse?.errmsg || e.message || "Failed to fetch course preview"});  }
  
 });
 
